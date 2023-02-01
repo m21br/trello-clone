@@ -5,6 +5,7 @@ declare module "styled-components" {
     bgColor: string;
     cardColor: string;
     boardColor: string;
+    deleteColor: string;
     isDraggingOver: string;
     isDraggingFromThis: string;
     isDragging: string;

@@ -1,14 +1,31 @@
-import { Droppable } from "react-beautiful-dnd";
-import DraggableCard from "./DraggableCard";
-import styled from "styled-components";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { useSetRecoilState } from "recoil";
-import { ITodo, toDoState } from "../atom";
+import { Droppable, Draggable } from 'react-beautiful-dnd';
+import DraggableCard from './DraggableCard';
+import styled from 'styled-components';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useSetRecoilState } from 'recoil';
+import { ITodo, toDoState } from '../atom';
+
+interface MaterialIconProps {
+	name: string;
+	Tag?: keyof JSX.IntrinsicElements;
+}
+
+export function MaterialIcon({ name, Tag = "div" }: MaterialIconProps) {
+	return (
+		<Tag
+			className="material-icons-round"
+			style={{ fontSize: "inherit", userSelect: "none" }}
+		>
+			{name}
+		</Tag>
+	);
+}
 
 interface IProps {
   toDos: ITodo[];
   boardId: string;
+  index: number;
 }
 
 interface IAreaProps {
@@ -26,6 +43,7 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin-right: 15px;
 `;
 
 const Area = styled.div<IAreaProps>`
@@ -35,7 +53,7 @@ const Area = styled.div<IAreaProps>`
       ? props.theme.isDraggingOver
       : props.isDraggingFromThis
       ? props.theme.isDraggingFromThis
-      : "transparent"};
+      : 'transparent'};
   transition: background-color 0.2s ease-in-out;
   padding: 20px;
 `;
@@ -74,7 +92,7 @@ interface IForm {
   toDo: string;
 }
 
-const Board = ({ toDos, boardId }: IProps) => {
+const Board = ({ toDos, boardId, index }: IProps) => {
   const setToDos = useSetRecoilState(toDoState);
   const {
     register,
@@ -83,48 +101,57 @@ const Board = ({ toDos, boardId }: IProps) => {
     clearErrors,
     formState: { errors },
   } = useForm<IForm>({
-    mode: "onChange",
+    mode: 'onChange',
   });
   const onValid = ({ toDo }: IForm) => {
     clearErrors();
     const newToDo = { id: Date.now(), text: toDo };
-    setValue("toDo", "");
+    setValue('toDo', '');
     setToDos((allBoards) => {
       return { ...allBoards, [boardId]: [...allBoards[boardId], newToDo] };
     });
   };
   return (
-    <Wrapper>
-      <Title>{boardId}</Title>
-      <Form onSubmit={handleSubmit(onValid)}>
-        <input
-          type="text"
-          placeholder={`Add task on ${boardId}`}
-          {...register("toDo", { required: "we need some text!!" })}
-        />
-        {errors.toDo && <Error>{errors.toDo.message}</Error>}
-      </Form>
-      <Droppable droppableId={boardId}>
-        {(magic, info) => (
-          <Area
-            isDraggingOver={info.isDraggingOver}
-            isDraggingFromThis={!!info.draggingFromThisWith}
-            ref={magic.innerRef}
-            {...magic.droppableProps}
-          >
-            {toDos.map((toDo, index) => (
-              <DraggableCard
-                key={toDo.id}
-                index={index}
-                toDoId={toDo.id}
-                toDoText={toDo.text}
-              />
-            ))}
-            {magic.placeholder}
-          </Area>
-        )}
-      </Droppable>
-    </Wrapper>
+    <Draggable draggableId={boardId} index={index} key={boardId}>
+      {(magic) => (
+        <Wrapper
+          {...magic.dragHandleProps}
+          {...magic.draggableProps}
+          ref={magic.innerRef}
+        >
+          <Title>{boardId}</Title>
+          <Form onSubmit={handleSubmit(onValid)}>
+            <input
+              type="text"
+              placeholder={`Add task on ${boardId}`}
+              autoComplete="off"
+              {...register('toDo', { required: 'we need some text!!' })}
+            />
+            {errors.toDo && <Error>{errors.toDo.message}</Error>}
+          </Form>
+          <Droppable droppableId={boardId}>
+            {(magic, info) => (
+              <Area
+                isDraggingOver={info.isDraggingOver}
+                isDraggingFromThis={!!info.draggingFromThisWith}
+                ref={magic.innerRef}
+                {...magic.droppableProps}
+              >
+                {toDos.map((toDo, index) => (
+                  <DraggableCard
+                    key={toDo.id}
+                    index={index}
+                    toDoId={toDo.id}
+                    toDoText={toDo.text}
+                  />
+                ))}
+                {magic.placeholder}
+              </Area>
+            )}
+          </Droppable>
+        </Wrapper>
+      )}
+    </Draggable>
   );
 };
 
